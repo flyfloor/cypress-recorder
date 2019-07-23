@@ -4,5 +4,7 @@ export default {
   WAITFORSELECTOR: 'waitForSelector*',
   NAVIGATION: 'navigation*',
   NAVIGATION_PROMISE: 'navigation-promise*',
-  FRAME_SET: 'frame-set*'
+  FRAME_SET: 'frame-set*',
+  COOKIE: 'cookie',
+  LOCAL_STORAGE: 'storage',
 }

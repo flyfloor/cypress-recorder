@@ -90,7 +90,7 @@ const development = {
   },
   plugins: [
     ...base.plugins,
-    new webpack.HotModuleReplacementPlugin()
+    // new webpack.HotModuleReplacementPlugin()
   ]
 }
 

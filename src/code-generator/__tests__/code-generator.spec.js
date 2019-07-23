@@ -1,12 +1,6 @@
 import CodeGenerator from '../CodeGenerator'
 
 describe('code-generator', () => {
-  test('it should generate nothing when there are no events', () => {
-    const events = []
-    const codeGenerator = new CodeGenerator()
-    expect(codeGenerator._parseEvents(events)).toBeFalsy()
-  })
-
   test('it generates a page.select() only for select dropdowns', () => {
     const events = [{ action: 'change', selector: 'select#animals', tagName: 'SELECT', value: 'hamster' }]
     const codeGenerator = new CodeGenerator()

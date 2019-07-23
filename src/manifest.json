@@ -6,8 +6,10 @@
   "permissions": [
     "storage",
     "webNavigation",
-	"activeTab",
-    "*://*/"
+	  "activeTab",
+    "tabs",
+    "*://*/",
+    "cookies"
   ],
   "icons" : {
     "128": "images/app_icon_128.png"

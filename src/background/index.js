@@ -1,8 +1,22 @@
 import pptrActions from '../code-generator/pptr-actions';
+const FILTERS = ['Thunder'];
+const getLocalStorageScript = filterStr => {
+  return 'var _filters = "' + filterStr + '".split(",");' +
+          'Object.keys(window.localStorage).reduce((prev, next) => {' + 
+          'if (_filters.filter(_f => next.indexOf(_f) !== -1).length === 0 && window.localStorage[next].length < 1000) {' +
+            'prev.push({' + 
+              'name: next,' + 
+              'value: window.localStorage[next]' +
+            '});' +
+          '}' + 
+          'return prev;' +
+        '}, []);';
+}
 
 class RecordingController {
   constructor() {
     this._recording = [];
+    this._storageFilterStr = '';
     this._boundedMessageHandler = null;
     this._boundedNavigationHandler = null;
     this._boundedWaitHandler = null;
@@ -30,21 +44,43 @@ class RecordingController {
       this._badgeState = 'rec';
       this.injectScript();
 
-      this._boundedMessageHandler = this.handleMessage.bind(this);
-      this._boundedNavigationHandler = this.handleNavigation.bind(this);
-      this._boundedWaitHandler = this.handleWait.bind(this);
+      chrome.storage.local.get('options', values => {
+        
+        try {
+          this._storageFilterStr = values.options.code.localStorageFilters
+        } catch (error) {
+          this._storageFilterStr = '';
+        }
 
-      chrome.runtime.onMessage.addListener(this._boundedMessageHandler);
-      chrome.webNavigation.onCompleted.addListener(
-        this._boundedNavigationHandler,
-      );
-      chrome.webNavigation.onBeforeNavigate.addListener(
-        this._boundedWaitHandler,
-      );
+        chrome.tabs.query({active: true, currentWindow: true}, tabs => {
+          chrome.cookies.getAll({ url: tabs[0].url }, cookies => {
+            this.handleMessage({
+              selector: undefined,
+              value: undefined,
+              action: pptrActions.COOKIE,
+              cookies: cookies
+            })
+          })
+        });
 
-      chrome.browserAction.setIcon({path: './images/icon-green.png'});
-      chrome.browserAction.setBadgeText({text: this._badgeState});
-      chrome.browserAction.setBadgeBackgroundColor({color: '#FF0000'});
+        this._boundedMessageHandler = this.handleMessage.bind(this);
+        this._boundedNavigationHandler = this.handleNavigation.bind(this);
+        this._boundedWaitHandler = this.handleWait.bind(this);
+
+        chrome.runtime.onMessage.addListener(this._boundedMessageHandler);
+        chrome.webNavigation.onCompleted.addListener(
+          this._boundedNavigationHandler,
+        );
+        chrome.webNavigation.onBeforeNavigate.addListener(
+          this._boundedWaitHandler,
+        );
+
+        chrome.browserAction.setIcon({path: './images/icon-green.png'});
+        chrome.browserAction.setBadgeText({text: this._badgeState});
+        chrome.browserAction.setBadgeBackgroundColor({color: '#FF0000'});
+
+      })
+
     });
   }
 
@@ -93,6 +129,20 @@ class RecordingController {
     });
   }
 
+  recordStorage(){
+    chrome.tabs.query({active: true, currentWindow: true}, tabs => {
+      chrome.tabs.executeScript(tabs[0].id, {
+        code: getLocalStorageScript(this._storageFilterStr),
+      }, (response) => {
+        this.handleMessage({
+          selector: undefined,
+          value: response[0],
+          action: pptrActions.LOCAL_STORAGE,
+        })
+      });
+    });
+  }
+
   recordCurrentUrl(href) {
     // console.debug('recording goto* for:', href);
     this.handleMessage({
@@ -138,8 +188,10 @@ class RecordingController {
 
   handleControlMessage(msg, sender) {
     // console.debug('handleControlMessage', msg);
-    if (msg.control === 'event-recorder-started')
+    if (msg.control === 'event-recorder-started') {
       chrome.browserAction.setBadgeText({text: this._badgeState});
+      this.recordStorage();
+    }
     if (msg.control === 'get-viewport-size')
       this.recordCurrentViewportSize(msg.coordinates);
     if (msg.control === 'get-current-url') this.recordCurrentUrl(msg.href);

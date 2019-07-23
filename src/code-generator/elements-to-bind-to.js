@@ -14,5 +14,5 @@ export default [
   'h6',
   'div',
   'span',
-  'img'
+  'img',
 ]

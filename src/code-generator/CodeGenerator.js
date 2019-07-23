@@ -6,9 +6,12 @@ const wrapDescribeHeader = `describe('test_name', function() {\n`
 
 const wrapDescribeFooter = `})`;
 
-const wrapItHeader = ` it('what_it_does', function() {\n`
+const wrapItHeader = `  it('what_it_does', function() {\n`
 
-const wrapItFooter = ` })\n`
+const wrapItFooter = `  })\n`
+
+const wrapBeforeEachHeader = `  beforeEach(() => {\n`;
+const wrapBeforeEachFooter = `  })`;
 
 export const defaults = {
   wrapDescribe: true,
@@ -23,8 +26,8 @@ export default class CodeGenerator {
     this._frame = 'cy';
     this._frameId = 0;
     this._allFrames = {};
-
     this._hasNavigation = false;
+    this._beforeEachBlock = [];
   }
 
   generate (events) {
@@ -37,10 +40,26 @@ export default class CodeGenerator {
 
     if (this._options.blankLinesBetweenBlocks) {
     	newLine = `\n`;
-	}
+    }
 
     let describeHeader = this._options.wrapDescribe ? wrapDescribeHeader + newLine : '';
-    return describeHeader + wrapItHeader + newLine;
+    return describeHeader;
+  }
+
+  _getBeforeEach() {
+    const _indent = this._options.wrapDescribe ? '    ' : '   ';
+    if (this._beforeEachBlock.length > 0) {
+      let _newLine = '\n';
+      let _content = '';
+      for (let block of this._beforeEachBlock) {
+        const lines = block.getLines();
+        for (let line of lines) {
+          _content += _indent + line.value + _newLine;
+        }
+      }
+      return wrapBeforeEachHeader + _content + wrapBeforeEachFooter + '\n\n';
+    }
+    return '';
   }
 
   _getFooter () {
@@ -56,13 +75,12 @@ export default class CodeGenerator {
 	return wrapItFooter + newLine + describeFooter;
   }
 
-  _parseEvents (events) {
+  _parseEvents (events = []) {
     console.debug(`generating code for ${events ? events.length : 0} events`);
     let result = '';
 
     for (let i = 0; i < events.length; i++) {
-      const { action, selector, value, href, keyCode, tagName, targetType, frameId, frameUrl } = events[i];
-
+      const { action, selector, value, href, keyCode, tagName, targetType, frameId, frameUrl, cookies } = events[i];
       // we need to keep a handle on what frames events originate from
       this._setFrames(frameId, frameUrl);
 
@@ -80,11 +98,11 @@ export default class CodeGenerator {
             this._blocks.push(this._handleChange(tagName, selector, value));
           }
           if (tagName === 'INPUT') {
-			if(targetType){
+        		if(targetType){
             	this._blocks.push(this._handleChange(tagName, selector, value, targetType));
-			} else {
+        		} else {
             	this._blocks.push(this._handleChange(tagName, selector, value));
-			}
+        		}
           }
           break
         case 'goto*':
@@ -98,6 +116,13 @@ export default class CodeGenerator {
           this._blocks.push(this._handleGoto(href, frameId));
           this._hasNavigation = true;
           break;
+        case 'cookie':
+          this._beforeEachBlock.push(this._cleanCookie());
+          cookies.map(item => this._beforeEachBlock.push(this._handleCookie(item)));
+          break;
+        case 'storage':
+          value.map(item => this._blocks.push(this._handleLocalStorage(item)))
+          break;
       }
     }
 
@@ -106,7 +131,7 @@ export default class CodeGenerator {
 
     if (this._options.blankLinesBetweenBlocks && this._blocks.length > 0) {
     	newLine = `\n \n`;
-	}
+	  }
 
     for (let block of this._blocks) {
       const lines = block.getLines();
@@ -114,6 +139,8 @@ export default class CodeGenerator {
         result += indent + line.value + newLine;
       }
     }
+
+    result = this._getBeforeEach() + wrapItHeader + '\n' + result;
 
     return result;
   }
@@ -166,6 +193,20 @@ export default class CodeGenerator {
 
   _handleGoto (href) {
     return new Block(this._frameId, { type: pptrActions.GOTO, value: `${this._frame}.visit('${href}')` });
+  }
+
+  _handleLocalStorage (pair) {
+    const { name, value } = pair
+    return new Block(this._frameId, { type: pptrActions.LOCAL_STORAGE, value: `window.localStorage.setItem('${name}', '${value}')` });
+  }
+
+  _handleCookie (cookiePair) {
+    const { name, value, ...options } = cookiePair
+    return new Block(this._frameId, { type: pptrActions.COOKIE, value: `${this._frame}.setCookie('${name}', '${value}', ${JSON.stringify(options)})` });
+  }
+
+  _cleanCookie () {
+    return new Block(this._frameId, { type: pptrActions.COOKIE, value: `${this._frame}.clearCookies()` });
   }
 
   _handleViewport (width, height) {

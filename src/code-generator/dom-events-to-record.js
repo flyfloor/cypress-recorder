@@ -6,7 +6,7 @@ export default {
   SELECT: 'select',
   SUBMIT: 'submit',
   LOAD: 'load',
-  UNLOAD: 'unload'
+  UNLOAD: 'unload',
 }
 
 // const events = [

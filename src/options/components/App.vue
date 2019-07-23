@@ -38,7 +38,19 @@
                 add blank lines between code blocks
               </label>
             </div>
+            <div class="settings-group">
+              <label>
+                <input id="options-code-getLocalStorage" type="checkbox" v-model="options.code.getLocalStorage" @change="save">
+                add localStorage store to the test case
+              </label>
+            </div>
           </div>
+          <textarea 
+            v-model="options.code.localStorageFilters" 
+            v-if="options.code.getLocalStorage" 
+            @change="save"
+            placeholder="需过滤的localStorage key，用英文逗号分隔，不超过5个。例如: test,beta">
+          </textarea>
         </div>
       </div>
       <div class="footer">
@@ -164,7 +176,7 @@
             display: block;
           }
         }
-        input[type="text"] {
+        input[type="text"], textarea {
           margin-bottom: 10px;
           width: 100%;
           border: 1px solid $gray-light;
