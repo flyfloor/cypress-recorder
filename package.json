@@ -1,7 +1,7 @@
 {
-  "name": "cypress-recorder-ls-and-cookies",
-  "version": "0.0.1",
-  "description": "A Chrome extension for recording browser interaction and generating Cypress scripts",
+  "name": "cypress-recorder-plus",
+  "version": "1.0.0",
+  "description": "Record to generate cypress scripts, enhanced with cookies and localStorage",
   "main": "index.js",
   "scripts": {
     "dev": "NODE_ENV=development DEBUG=puppeteer-recorder:* webpack --watch",
@@ -18,19 +18,19 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/oscartavarez/cypress-recorder"
+    "url": "https://github.com/jerryshew/cypress-recorder"
   },
   "keywords": [
     "cypress",
     "chrome",
     "extension"
   ],
-  "author": "Tim Nolet",
+  "author": "jerryshew",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/oscartavarez/cypress-recorder/issues"
+    "url": "https://github.com/jerryshew/cypress-recorder/issues"
   },
-  "homepage": "https://github.com/oscartavarez/cypress-recorder#readme",
+  "homepage": "https://github.com/jerryshew/cypress-recorder#readme",
   "dependencies": {
     "@medv/finder": "^1.1.0",
     "vue": "^2.5.17",

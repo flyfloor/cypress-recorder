@@ -1,8 +1,8 @@
 {
-  "name": "Cypress Scenario Recorder",
-  "version": "0.0.2",
+  "name": "Cypress Recorder Plus",
+  "version": "1.0.0",
   "manifest_version": 2,
-  "description": "A Chrome extension for recording browser interaction and generating Cypress scripts",
+  "description": "Record to generate cypress scripts, enhanced with cookies and localStorage",
   "permissions": [
     "storage",
     "webNavigation",
